@@ -144,13 +144,19 @@ extern int tailscale_getremoteaddr(tailscale_listener l, tailscale_conn conn, ch
 //
 // It is the spiritual equivalent to accept(2).
 //
-// The newly allocated connection is written to conn_out.
+// tailscale_accept uses SCM_RIGHTS to transfer the connection file descriptor.
+// Due to this, the connection's fd may be different from its id.
+// To handle this, tailscale_accept has an extra socket_fd_out parameter.
+//
+// The newly allocated connection id is written to conn_id_out.
+//
+// The socket file descriptor for the newly allocated connection is written to socket_fd_out.
 //
 // Returns:
 // 	0     - success
 // 	EBADF - listener is not a valid tailscale
 // 	-1    - call tailscale_errmsg for details
-extern int tailscale_accept(tailscale_listener listener, tailscale_conn* conn_out);
+extern int tailscale_accept(tailscale_listener listener, tailscale_conn* conn_id_out, int* socket_fd_out);
 
 // tailscale_loopback starts a loopback address server.
 //

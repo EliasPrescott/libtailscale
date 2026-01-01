@@ -9,6 +9,7 @@ import "C"
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"net"
@@ -274,7 +275,9 @@ func TsnetListen(sd C.int, network, addr *C.char, listenerOut *C.int) C.int {
 				continue
 			}
 			rights := syscall.UnixRights(int(connFd))
-			err = syscall.Sendmsg(sp, nil, rights, nil, 0)
+			var msgBytes [4]byte
+			binary.LittleEndian.PutUint32(msgBytes[:], uint32(connFd))
+			err = syscall.Sendmsg(sp, msgBytes[:], rights, nil, 0)
 			if err != nil {
 				// We handle sp being closed in the read goroutine above.
 				if s.s.Logf != nil {

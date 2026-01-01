@@ -49,13 +49,13 @@ int tailscale_listen(tailscale sd, const char* network, const char* addr, tailsc
 	return TsnetListen(sd, (char*)network, (char*)addr, (int*)listener_out);
 }
 
-int tailscale_accept(tailscale_listener ld, tailscale_conn* conn_out) {
+int tailscale_accept(tailscale_listener ld, tailscale_conn* conn_id_out, int* sock_fd_out) {
 	struct msghdr msg = {0};
 
 	char mbuf[256];
 	struct iovec io = { .iov_base = mbuf, .iov_len = sizeof(mbuf) };
 	msg.msg_iov = &io;
-	msg.msg_iovlen = 1;
+	msg.msg_iovlen = 4;
 
 	char cbuf[256];
 	msg.msg_control = cbuf;
@@ -65,11 +65,15 @@ int tailscale_accept(tailscale_listener ld, tailscale_conn* conn_out) {
 		return -1;
 	}
 
+    int conn_id = mbuf[0] + (mbuf[1] << 8) + (mbuf[2] << 16) + (mbuf[3] << 24);
+    *conn_id_out = conn_id;
+
 	struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
 	unsigned char* data = CMSG_DATA(cmsg);
 
 	int fd = *(int*)data;
-	*conn_out = fd;
+	*sock_fd_out = fd;
+
 	return 0;
 }
 
